@@ -15,7 +15,7 @@ from util import calc_accuracy
 
 
 (x_train, y_train), (x_test, y_test) = sequence.load_data()
-x_train, x_test = x_train[:, ::-1], x_test[:, ::-1] #reverse
+# x_train, x_test = x_train[:, ::-1], x_test[:, ::-1] #reverse
 char_to_id, id_to_char = sequence.get_vocab()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -36,8 +36,7 @@ BATCH_SIZE = 100
 EPOCH = 1000
 batch_num = ceil(len(x_train) // BATCH_SIZE)
 
-def train_loader(data: torch.tensor, target: torch.tensor, batch_size: int =100) -> List(torch.tensor):
-    """mini-batchに分割する関数"""
+def train_loader(data: torch.tensor, target: torch.tensor, batch_size: int =100):
     input_batchs = []
     output_batchs = []
     
@@ -60,10 +59,11 @@ class Encoder(nn.Module):
         self.emb_dim = emb_dim
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.emb_dim) # padding_idx=5 #num_embeddings: inputの系列の長さ
     # 単語の分散表現の初期化
-#     self.embedding.weight.data.copy_(torch.from_numpy(pretrained_weight)) #今回はいらない
+#     self.embedding.weight.data.copy_(torch.from_numpy(pretrained_weight)) #今回はいらない    
         self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True, dropout=0.5)
 
     def forward(self, indices, batch_size=100):
+        # indices = tensor([batch_size, MAX_INPUT(7)])
         embedding = self.embedding(indices)
         if embedding.dim() == 2: #　バッチサイズが1の時3次元にしている
             embedding = torch.unsqueeze(embedding, 1)
@@ -96,9 +96,6 @@ class Seq2seq:
     
     def forward(self, encoder_input, decoder_input):
         batch_size = encoder_input.size(0)
-        target_length = decoder_input.size(1)
-        source_length = decoder_input.size(1)
-
         encoder_hidden = self.encoder(encoder_input, batch_size)
         
         source = decoder_input[:, :-1]
@@ -106,6 +103,9 @@ class Seq2seq:
         
         # 1文字ずつ入力し、outputのcross entropyを計算する
         loss = 0
+        batch_size = encoder_hidden.size(1)
+        target_length = target.size(1)
+        source_length = source.size(1)
         decoder_output = np.zeros((batch_size, target_length))
         for i in range(source_length):
             decoder_result, _ = self.decoder(source[:, i], encoder_hidden)
@@ -134,7 +134,6 @@ class Trainer:
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
         return self.train_output, self.train_loss
-        
 
         
 model = Seq2seq()
