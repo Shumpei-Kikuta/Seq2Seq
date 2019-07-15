@@ -15,7 +15,7 @@ from util import calc_accuracy
 
 
 (x_train, y_train), (x_test, y_test) = sequence.load_data()
-# x_train, x_test = x_train[:, ::-1], x_test[:, ::-1] #reverse
+x_train, x_test = x_train[:, ::-1], x_test[:, ::-1] #reverse
 char_to_id, id_to_char = sequence.get_vocab()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -157,7 +157,8 @@ for e in range(EPOCH):
         input_batch = input_batchs[i].to(device)
         output_batch = output_batchs[i].to(device)
 
-        train_output, train_loss = trainer.fit(input_batch, output_batch)
+        train_output, each_train_loss = trainer.fit(input_batch, output_batch)
+        train_loss += each_train_loss
         train_batch_outputs = np.concatenate([train_batch_outputs, train_output], axis=0) if i != 0 else train_output
 
     train_loss /= batch_num

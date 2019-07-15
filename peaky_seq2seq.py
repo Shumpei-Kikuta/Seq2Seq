@@ -167,7 +167,8 @@ for e in range(EPOCH):
         input_batch = input_batchs[i].to(device)
         output_batch = output_batchs[i].to(device)
 
-        train_output, train_loss = trainer.fit(input_batch, output_batch)
+        train_output, each_train_loss = trainer.fit(input_batch, output_batch)
+        train_loss += each_train_loss
         train_batch_outputs = np.concatenate([train_batch_outputs, train_output], axis=0) if i != 0 else train_output
 
     train_loss /= batch_num
