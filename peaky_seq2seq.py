@@ -15,7 +15,7 @@ from util import calc_accuracy
 
 
 (x_train, y_train), (x_test, y_test) = sequence.load_data()
-# x_train, x_test = x_train[:, ::-1], x_test[:, ::-1] #reverse
+x_train, x_test = x_train[:, ::-1], x_test[:, ::-1] #reverse
 char_to_id, id_to_char = sequence.get_vocab()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -70,7 +70,7 @@ class Encoder(nn.Module):
         _, state = self.gru(embedding, torch.zeros(1, batch_size, self.hidden_dim).to(device)) #最初の入力は0ベクトル
         return state
 
-class Decoder(nn.Module):
+class PeakyDecoder(nn.Module):
     def __init__(self, vocab_size, hidden_dim, emb_dim):
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -78,20 +78,29 @@ class Decoder(nn.Module):
 
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.emb_dim)
         self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True, dropout=0.5)
-        self.linear = nn.Linear(hidden_dim, vocab_size)
+        self.linear = nn.Linear(hidden_dim + hidden_dim, vocab_size)
 
     def forward(self, indices, init_hidden):
         embedding = self.embedding(indices)
         if embedding.dim() == 2: #バッチサイズが1の時3次元に変換
             embedding = torch.unsqueeze(embedding, 1)
         output, state = self.gru(embedding, init_hidden) #最初の入力は0ベクトル
+        
+        batch_size = output.size(0)
+        
+        ## peaky part
+        init_hidden = init_hidden.view(batch_size, 1, self.hidden_dim)
+        output = torch.cat((output, init_hidden), dim=2)
+        
+        ##
+        
         output = self.linear(output)
         return output, state
         
-class Seq2seq:
+class PeakySeq2seq:
     def __init__(self):
         self.encoder = Encoder(vocab_size=vocab_size, hidden_dim=HIDDEN_DIM, emb_dim=EMB_DIM).to(device)
-        self.decoder = Decoder(vocab_size=vocab_size, hidden_dim=HIDDEN_DIM, emb_dim=EMB_DIM).to(device)
+        self.decoder = PeakyDecoder(vocab_size=vocab_size, hidden_dim=HIDDEN_DIM, emb_dim=EMB_DIM).to(device)
         self.criterion = nn.CrossEntropyLoss()
     
     def forward(self, encoder_input, decoder_input):
@@ -113,7 +122,8 @@ class Seq2seq:
             decoder_output[:, i] = np.argmax(decoder_result.cpu().detach().numpy(), axis=1)
             loss += self.criterion(decoder_result, target[:, i])
         return loss, decoder_output
-        
+       
+
 class Trainer:
     def __init__(self, model):
         self.model = model
@@ -136,7 +146,7 @@ class Trainer:
         return self.train_output, self.train_loss
 
         
-model = Seq2seq()
+model = PeakySeq2seq()
 trainer = Trainer(model)
 
 print("Training..")
