@@ -60,7 +60,7 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.emb_dim) # padding_idx=5 #num_embeddings: inputの系列の長さ
     # 単語の分散表現の初期化
 #     self.embedding.weight.data.copy_(torch.from_numpy(pretrained_weight)) #今回はいらない    
-        self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True, dropout=0.5)
+        self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True)
 
     def forward(self, indices, batch_size=100):
         # indices = tensor([batch_size, MAX_INPUT(7)])
@@ -77,7 +77,7 @@ class PeakyDecoder(nn.Module):
         self.emb_dim = emb_dim
 
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.emb_dim)
-        self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True, dropout=0.5)
+        self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True)
         self.linear = nn.Linear(hidden_dim + hidden_dim, vocab_size)
 
     def forward(self, indices, init_hidden):
