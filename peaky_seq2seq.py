@@ -134,7 +134,6 @@ class Trainer:
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
         return self.train_output, self.train_loss
-        
 
         
 model = Seq2seq()

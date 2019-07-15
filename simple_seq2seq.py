@@ -11,6 +11,7 @@ from math import ceil
 import sequence
 
 from typing import List
+from util import calc_accuracy
 
 
 (x_train, y_train), (x_test, y_test) = sequence.load_data()
@@ -133,12 +134,7 @@ class Trainer:
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
         return self.train_output, self.train_loss
-        
-def calc_accuracy(pred_Y, Y):
-    """pred_Yと、Yが列方向に一致しているか"""
-    same_num = np.equal(pred_Y, Y).all(axis=1).sum()
-    same_rate = same_num / len(Y)
-    return same_rate
+
         
 model = Seq2seq()
 trainer = Trainer(model)
