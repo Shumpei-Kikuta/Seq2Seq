@@ -77,21 +77,29 @@ class PeakyDecoder(nn.Module):
         self.emb_dim = emb_dim
 
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=self.emb_dim)
-        self.gru = nn.GRU(input_size=emb_dim, hidden_size=hidden_dim, batch_first=True)
-        self.linear = nn.Linear(hidden_dim + hidden_dim, vocab_size)
+        self.gru = nn.GRU(input_size=emb_dim+hidden_dim, hidden_size=hidden_dim, batch_first=True)
+        self.linear = nn.Linear(hidden_dim+hidden_dim, vocab_size)
 
     def forward(self, indices, init_hidden):
         embedding = self.embedding(indices)
         if embedding.dim() == 2: #バッチサイズが1の時3次元に変換
             embedding = torch.unsqueeze(embedding, 1)
+    
+        batch_size = embedding.size(0)
+
+        ## peaky part
+        print(embedding.size())
+        init_hidden = init_hidden.view(batch_size, 1, self.hidden_dim)
+        print(init_hidden.size())
+        embedding = torch.cat((embedding, init_hidden), dim=2)
+        print(embedding.size())
+        ##
+        init_hidden = init_hidden.view(1, batch_size, self.hidden_dim)
         output, state = self.gru(embedding, init_hidden) #最初の入力は0ベクトル
-        
-        batch_size = output.size(0)
         
         ## peaky part
         init_hidden = init_hidden.view(batch_size, 1, self.hidden_dim)
         output = torch.cat((output, init_hidden), dim=2)
-        
         ##
         
         output = self.linear(output)
