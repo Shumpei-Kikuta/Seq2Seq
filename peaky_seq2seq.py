@@ -31,7 +31,7 @@ MAX_OUTPUT = 5
 HIDDEN_DIM = 32
 EMB_DIM = 32
 vocab_size = len(char_to_id)
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.01
 BATCH_SIZE = 100
 EPOCH = 1000
 batch_num = ceil(len(x_train) // BATCH_SIZE)
@@ -88,11 +88,8 @@ class PeakyDecoder(nn.Module):
         batch_size = embedding.size(0)
 
         ## peaky part
-        print(embedding.size())
         init_hidden = init_hidden.view(batch_size, 1, self.hidden_dim)
-        print(init_hidden.size())
         embedding = torch.cat((embedding, init_hidden), dim=2)
-        print(embedding.size())
         ##
         init_hidden = init_hidden.view(1, batch_size, self.hidden_dim)
         output, state = self.gru(embedding, init_hidden) #最初の入力は0ベクトル
