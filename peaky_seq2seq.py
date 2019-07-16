@@ -117,7 +117,6 @@ class PeakySeq2seq:
         
         # 1文字ずつ入力し、outputのcross entropyを計算する
         loss = 0
-        batch_size = encoder_hidden.size(1)
         target_length = target.size(1)
         source_length = source.size(1)
         decoder_output = np.zeros((batch_size, target_length))
